@@ -5,11 +5,13 @@ use \SensioLabs\Security\SecurityChecker;
 class phpeye {
     
     public $arrArgs = array("-p" => true,
-                            "-f" => true,
+                            "-o" => true,
                             "-v" => false,
                             "-h" => false);
     
     public $arrInput = array();
+    public $output   = array("versions" => array("minor" => array(), "major" => array()),
+                             "security" => array());
     
     public function __construct($argv) {
         // parse the command line args
@@ -23,8 +25,12 @@ class phpeye {
         if(isset($this->arrInput["-p"]) && is_dir($this->arrInput["-p"])) {
             $this->checkVersions();
             $this->checkSecurity();
+            if(isset($this->arrInput["-o"]) ) {
+                file_put_contents($this->arrInput["-o"],json_encode($this->output));
+            }
         } else {
-            $this->out("No path given. check -h");
+            $this->help();
+            die();
         }
     }
     
@@ -87,12 +93,14 @@ class phpeye {
             $this->out("+ Major update available");
             foreach($arrVer["update-possible"] as $ver) {
                 if(isset($arrDirectDep[$ver["name"]]) || isset($this->arrInput["-v"])) {
+                    $this->output["versions"]["major"][] = $ver;
                     $this->out(" - " . $ver["name"] . " | Current Version: " . $ver["currv"] . " | Latest Version: " . $ver["latv"]);
                 }
             }
             $this->out("\n-----------------------------------------\n+ Minor update available");
             foreach($arrVer["semver-safe-update"] as $ver) {
                 if(isset($arrDirectDep[$ver["name"]]) || isset($this->arrInput["-v"])) {
+                    $this->output["versions"]["minor"][] = $ver;
                     $this->out(" - " . $ver["name"] . " | Current Version: " . $ver["currv"] . " | Latest Version: " . $ver["latv"]);
                 }
             }
@@ -123,7 +131,8 @@ class phpeye {
             }
         }
         
-
+        $this->output["security"] = $arrSecurity;
+        
         if(count($arrSecurity) > 0) {
             $this->out("\nListing security relevant info:\n-----------------------------------------");
             foreach($arrSecurity as $key => $arrSec) {
@@ -172,21 +181,15 @@ class phpeye {
     public function help()  {
         $this->out("|PHPeye-tool help:");
         $this->out("");
-        $this->out("Param       Description");
-        $this->out(" -p <path>  Path to the directory including the composer.json / composer.lock (no ending slash) /path/to/something");
-        $this->out(" -v         Print verbose output (includes outdated versions of libraries depended second level)");
+        $this->out("Param            Description");
+        $this->out(" -p <path>       Path to the directory including the composer.json / composer.lock (no ending slash) /path/to/something");
+        $this->out(" -o <path/file>  Writes result output in json format in given path/file");
+        $this->out(" -v              Print verbose output (includes outdated versions of libraries depended second level)");
         $this->out("");
         $this->out("So long and thanks for all the fish");
     }
     
 }
 
-
-
-
-
-
-
 $t = new phpeye($argv);
-
 ?>
