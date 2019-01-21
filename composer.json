@@ -1,0 +1,11 @@
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/sensiolabs/security-checker"
+        }
+    ],
+    "require": {
+        "sensiolabs/security-checker": "dev-master"
+    }
+}
